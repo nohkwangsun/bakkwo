@@ -3,10 +3,10 @@
     <string name="app_name">바꾸</string>
     <string name="widget_description">클립보드 텍스트를 한 번의 탭으로 번역합니다</string>
 
-    <string name="hint_api_key">Anthropic API 키 (sk-ant-…)</string>
+    <string name="hint_api_key">Gemini API 키 (AIza…)</string>
     <string name="btn_save_key">저장</string>
     <string name="msg_key_saved">API 키가 저장되었습니다</string>
-    <string name="msg_key_missing">먼저 Anthropic API 키를 저장해주세요</string>
+    <string name="msg_key_missing">먼저 Gemini API 키를 저장해주세요</string>
 
     <string name="hint_source_text">번역할 문장을 입력하세요 (한국어 → 영어, 그 외 → 한국어로 자동 번역)</string>
     <string name="label_result">번역 결과</string>

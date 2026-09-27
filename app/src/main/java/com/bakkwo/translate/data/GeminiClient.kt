@@ -9,17 +9,19 @@ import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 /**
- * Talks to the Anthropic Messages API directly from the device. No backend server: the API key
- * the user pastes into the app is used as-is for every request.
+ * Talks to the Google Gemini API directly from the device. No backend server: the API key the
+ * user pastes into the app (free tier available from Google AI Studio) is used as-is for every
+ * request.
  */
-object AnthropicClient {
+object GeminiClient {
 
-    private const val ENDPOINT = "https://api.anthropic.com/v1/messages"
-    private const val API_VERSION = "2023-06-01"
-    private const val MODEL = "claude-haiku-4-5-20251001"
+    private const val MODEL = "gemini-2.5-flash"
+    private const val ENDPOINT_TEMPLATE =
+        "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s"
 
     // Baked into the app so the user never has to type a translation prompt themselves.
     private const val SYSTEM_PROMPT = """You are a translation engine embedded in a one-tap widget.
@@ -37,23 +39,25 @@ Output ONLY the translated text. No quotes, labels, explanations, or extra comme
         var connection: HttpURLConnection? = null
         try {
             val body = JSONObject().apply {
-                put("model", MODEL)
-                put("max_tokens", 1024)
-                put("system", SYSTEM_PROMPT)
-                put("messages", JSONArray().put(
-                    JSONObject().put("role", "user").put("content", text)
+                put("system_instruction", JSONObject().put(
+                    "parts", JSONArray().put(JSONObject().put("text", SYSTEM_PROMPT))
                 ))
+                put("contents", JSONArray().put(
+                    JSONObject()
+                        .put("role", "user")
+                        .put("parts", JSONArray().put(JSONObject().put("text", text)))
+                ))
+                put("generationConfig", JSONObject().put("temperature", 0))
             }
 
-            val url = URL(ENDPOINT)
+            val encodedKey = URLEncoder.encode(apiKey, "UTF-8")
+            val url = URL(ENDPOINT_TEMPLATE.format(MODEL, encodedKey))
             connection = (url.openConnection() as HttpURLConnection).apply {
                 requestMethod = "POST"
                 connectTimeout = 15_000
                 readTimeout = 30_000
                 doOutput = true
                 setRequestProperty("content-type", "application/json")
-                setRequestProperty("x-api-key", apiKey)
-                setRequestProperty("anthropic-version", API_VERSION)
             }
 
             OutputStreamWriter(connection.outputStream, StandardCharsets.UTF_8).use { writer ->
@@ -72,15 +76,19 @@ Output ONLY the translated text. No quotes, labels, explanations, or extra comme
             }
 
             val json = JSONObject(responseText)
-            val content = json.getJSONArray("content")
-            val translated = buildString {
-                for (i in 0 until content.length()) {
-                    val block = content.getJSONObject(i)
-                    if (block.optString("type") == "text") {
-                        append(block.optString("text"))
+            val candidates = json.optJSONArray("candidates")
+            val translated = if (candidates != null && candidates.length() > 0) {
+                val parts = candidates.getJSONObject(0).getJSONObject("content").optJSONArray("parts")
+                buildString {
+                    if (parts != null) {
+                        for (i in 0 until parts.length()) {
+                            append(parts.getJSONObject(i).optString("text"))
+                        }
                     }
-                }
-            }.trim()
+                }.trim()
+            } else {
+                ""
+            }
 
             if (translated.isEmpty()) {
                 Result.Failure("빈 응답을 받았습니다")

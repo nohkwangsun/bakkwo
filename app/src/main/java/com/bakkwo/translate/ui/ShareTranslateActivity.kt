@@ -9,7 +9,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.bakkwo.translate.R
-import com.bakkwo.translate.data.AnthropicClient
+import com.bakkwo.translate.data.GeminiClient
 import com.bakkwo.translate.data.Prefs
 import com.bakkwo.translate.databinding.ActivityShareBinding
 import com.bakkwo.translate.widget.BakkwoWidgetProvider
@@ -62,13 +62,13 @@ class ShareTranslateActivity : AppCompatActivity() {
 
         binding.textShareResult.setText(R.string.translating)
         lifecycleScope.launch {
-            when (val result = AnthropicClient.translate(apiKey, text)) {
-                is AnthropicClient.Result.Success -> {
+            when (val result = GeminiClient.translate(apiKey, text)) {
+                is GeminiClient.Result.Success -> {
                     binding.textShareResult.text = result.translation
                     Prefs.setResult(this@ShareTranslateActivity, text, result.translation)
                     BakkwoWidgetProvider.updateAllWidgets(this@ShareTranslateActivity)
                 }
-                is AnthropicClient.Result.Failure -> {
+                is GeminiClient.Result.Failure -> {
                     binding.textShareResult.text = getString(R.string.translate_error) + "\n" + result.message
                 }
             }

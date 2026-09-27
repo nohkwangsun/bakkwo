@@ -4,8 +4,8 @@ import android.content.Context
 import android.content.SharedPreferences
 
 /**
- * Local, app-private storage for the Anthropic API key and the last translation shown in the
- * widget. The key never leaves the device except in the direct HTTPS request to Anthropic.
+ * Local, app-private storage for the Gemini API key and the last translation shown in the
+ * widget. The key never leaves the device except in the direct HTTPS request to Google.
  */
 object Prefs {
     private const val FILE_NAME = "bakkwo_prefs"

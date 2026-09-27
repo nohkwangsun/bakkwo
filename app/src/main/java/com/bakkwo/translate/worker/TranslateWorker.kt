@@ -7,7 +7,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.bakkwo.translate.R
-import com.bakkwo.translate.data.AnthropicClient
+import com.bakkwo.translate.data.GeminiClient
 import com.bakkwo.translate.data.Prefs
 import com.bakkwo.translate.widget.BakkwoWidgetProvider
 
@@ -25,13 +25,13 @@ class TranslateWorker(appContext: Context, params: WorkerParameters) :
             return Result.failure()
         }
 
-        return when (val result = AnthropicClient.translate(apiKey, text)) {
-            is AnthropicClient.Result.Success -> {
+        return when (val result = GeminiClient.translate(apiKey, text)) {
+            is GeminiClient.Result.Success -> {
                 Prefs.setResult(applicationContext, text, result.translation)
                 BakkwoWidgetProvider.updateAllWidgets(applicationContext)
                 Result.success()
             }
-            is AnthropicClient.Result.Failure -> {
+            is GeminiClient.Result.Failure -> {
                 Prefs.setError(applicationContext, result.message)
                 BakkwoWidgetProvider.updateAllWidgets(applicationContext)
                 Result.failure()
