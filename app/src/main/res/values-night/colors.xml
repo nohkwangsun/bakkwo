@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="bakkwo_primary">#8AB4FF</color>
-    <color name="bakkwo_primary_dark">#000A2E</color>
-    <color name="bakkwo_on_primary">#00174B</color>
-    <color name="bakkwo_background">#111318</color>
-    <color name="bakkwo_surface">#1C1E27</color>
-    <color name="bakkwo_on_surface">#E3E2E9</color>
-    <color name="bakkwo_muted">#B7B9C6</color>
-    <color name="bakkwo_error">#FFB4AB</color>
-    <color name="widget_background">#1C1E27</color>
+    <color name="bakkwo_primary">#BAC3FF</color>
+    <color name="bakkwo_on_primary">#11277E</color>
+    <color name="bakkwo_primary_container">#2D40A6</color>
+    <color name="bakkwo_on_primary_container">#DEE0FF</color>
+    <color name="bakkwo_secondary_container">#444559</color>
+    <color name="bakkwo_on_secondary_container">#E1E0F9</color>
+
+    <color name="widget_surface">#1E1F26</color>
+    <color name="widget_on_surface">#E4E1E9</color>
+    <color name="widget_accent">#BAC3FF</color>
+    <color name="widget_primary">#BAC3FF</color>
+    <color name="widget_on_primary">#11277E</color>
+    <color name="widget_tonal">#2D40A6</color>
+    <color name="widget_on_tonal">#DEE0FF</color>
 </resources>

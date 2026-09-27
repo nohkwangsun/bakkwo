@@ -1,27 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
 
-    <style name="Theme.Bakkwo" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <!-- Material 3. On Android 12+ (all recent Galaxy phones) BakkwoApp applies dynamic colors,
+         so the app follows the wallpaper palette; these values are the fallback. -->
+    <style name="Theme.Bakkwo" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/bakkwo_primary</item>
-        <item name="colorPrimaryDark">@color/bakkwo_primary_dark</item>
-        <item name="colorAccent">@color/bakkwo_primary</item>
-        <item name="android:colorBackground">@color/bakkwo_background</item>
         <item name="colorOnPrimary">@color/bakkwo_on_primary</item>
-        <item name="android:statusBarColor" tools:targetApi="21">@color/bakkwo_primary_dark</item>
+        <item name="colorPrimaryContainer">@color/bakkwo_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/bakkwo_on_primary_container</item>
+        <item name="colorSecondaryContainer">@color/bakkwo_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/bakkwo_on_secondary_container</item>
+        <item name="android:statusBarColor">?android:attr/colorBackground</item>
+        <item name="android:windowLightStatusBar">@bool/light_system_bars</item>
     </style>
 
-    <!-- Small floating dialog shown when text is shared into the app from another app. -->
-    <style name="Theme.Bakkwo.Dialog" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
+    <!-- Floating card shown when text is shared into the app from another app. -->
+    <style name="Theme.Bakkwo.Dialog" parent="Theme.Material3.DayNight.Dialog">
         <item name="colorPrimary">@color/bakkwo_primary</item>
-        <item name="colorAccent">@color/bakkwo_primary</item>
-        <item name="android:windowIsFloating">true</item>
+        <item name="colorOnPrimary">@color/bakkwo_on_primary</item>
+        <item name="colorPrimaryContainer">@color/bakkwo_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/bakkwo_on_primary_container</item>
+        <item name="colorSecondaryContainer">@color/bakkwo_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/bakkwo_on_secondary_container</item>
         <item name="android:windowMinWidthMajor">90%</item>
         <item name="android:windowMinWidthMinor">90%</item>
     </style>
 
     <!-- Fully transparent, used only as a trampoline to gain focus long enough to read the
          clipboard before handing off to WorkManager. Never visible to the user. -->
-    <style name="Theme.Bakkwo.Invisible" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="Theme.Bakkwo.Invisible" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowContentOverlay">@null</item>

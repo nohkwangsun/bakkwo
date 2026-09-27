@@ -5,7 +5,8 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.ComponentName
 import android.content.Context
-import android.os.Build
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
 import android.text.InputType
@@ -14,7 +15,6 @@ import android.view.Gravity
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.bakkwo.translate.R
@@ -22,7 +22,7 @@ import com.bakkwo.translate.data.GeminiClient
 import com.bakkwo.translate.data.Prefs
 import com.bakkwo.translate.databinding.ActivityMainBinding
 import com.bakkwo.translate.widget.BakkwoWidgetProvider
-import com.google.android.material.textfield.TextInputLayout
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -37,13 +37,18 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.inputLayoutApiKey.endIconMode = TextInputLayout.END_ICON_PASSWORD_TOGGLE
-
         Prefs.getApiKey(this)?.let { binding.editApiKey.setText(it) }
+        updateKeyStatus()
+
+        // First run: put the API key card on top so it's the first thing to fill in.
+        if (!Prefs.hasApiKey(this)) {
+            binding.cardContainer.removeView(binding.cardSettings)
+            binding.cardContainer.addView(binding.cardSettings, 0)
+        }
 
         // Restore the widget's last translation so tapping it (which opens this screen) actually
-        // shows the full text, not just the 3-line widget preview. Only the result is restored
-        // (not the source EditText) so this doesn't re-trigger a translation on open.
+        // shows the full text, not just the widget preview. Only the result is restored (not the
+        // source box) so this doesn't re-trigger a translation on open.
         if (Prefs.getLastState(this) == Prefs.STATE_DONE) {
             binding.textResult.text = Prefs.getLastResult(this)
         }
@@ -52,7 +57,12 @@ class MainActivity : AppCompatActivity() {
             val key = binding.editApiKey.text?.toString().orEmpty()
             if (key.isBlank()) return@setOnClickListener
             Prefs.setApiKey(this, key)
+            updateKeyStatus()
             Toast.makeText(this, R.string.msg_key_saved, Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnGetKey.setOnClickListener {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.url_get_key))))
         }
 
         binding.editSourceText.addTextChangedListener(object : TextWatcher {
@@ -80,6 +90,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun updateKeyStatus() {
+        binding.textKeyStatus.setText(
+            if (Prefs.hasApiKey(this)) R.string.key_status_saved else R.string.key_status_missing
+        )
+    }
+
     private fun showPromptEditorDialog() {
         val editText = EditText(this).apply {
             setText(Prefs.getActivePrompt(this@MainActivity))
@@ -87,13 +103,13 @@ class MainActivity : AppCompatActivity() {
             gravity = Gravity.TOP or Gravity.START
             minLines = 8
         }
-        val padding = (16 * resources.displayMetrics.density).toInt()
+        val padding = (20 * resources.displayMetrics.density).toInt()
         val container = FrameLayout(this).apply {
             setPadding(padding, padding / 2, padding, 0)
             addView(editText)
         }
 
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle(R.string.prompt_editor_title)
             .setMessage(R.string.prompt_editor_message)
             .setView(container)
@@ -143,7 +159,7 @@ class MainActivity : AppCompatActivity() {
         val manager = AppWidgetManager.getInstance(this)
         val provider = ComponentName(this, BakkwoWidgetProvider::class.java)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && manager.isRequestPinAppWidgetSupported) {
+        if (manager.isRequestPinAppWidgetSupported) {
             manager.requestPinAppWidget(provider, null, null)
         } else {
             Toast.makeText(this, R.string.msg_pin_unsupported, Toast.LENGTH_LONG).show()

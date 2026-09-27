@@ -50,6 +50,7 @@ class ShareTranslateActivity : AppCompatActivity() {
             return
         }
 
+        binding.textShareSource.text = sharedText
         translate(sharedText)
     }
 
