@@ -38,6 +38,10 @@ class BakkwoWidgetProvider : AppWidgetProvider() {
         // and the copy/reset buttons, so it's hidden and the button falls back to icon-only.
         private const val COMPACT_WIDTH_THRESHOLD_DP = 160
 
+        // Below this height there isn't room for a multi-line result preview above the button
+        // row, so it's capped to a single ellipsized line instead of getting clipped mid-line.
+        private const val COMPACT_HEIGHT_THRESHOLD_DP = 100
+
         /** Called by the worker/receiver once a new translation (or error) is ready. */
         fun updateAllWidgets(context: Context) {
             val manager = AppWidgetManager.getInstance(context)
@@ -58,12 +62,16 @@ class BakkwoWidgetProvider : AppWidgetProvider() {
             }
             views.setTextViewText(R.id.widget_result, resultText)
 
-            val minWidthDp = manager.getAppWidgetOptions(appWidgetId)
-                .getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, Int.MAX_VALUE)
-            val isCompact = minWidthDp < COMPACT_WIDTH_THRESHOLD_DP
+            val options = manager.getAppWidgetOptions(appWidgetId)
+            val minWidthDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, Int.MAX_VALUE)
+            val minHeightDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, Int.MAX_VALUE)
             views.setViewVisibility(
                 R.id.widget_translate_label,
-                if (isCompact) View.GONE else View.VISIBLE
+                if (minWidthDp < COMPACT_WIDTH_THRESHOLD_DP) View.GONE else View.VISIBLE
+            )
+            views.setInt(
+                R.id.widget_result, "setMaxLines",
+                if (minHeightDp < COMPACT_HEIGHT_THRESHOLD_DP) 1 else 4
             )
 
             views.setOnClickPendingIntent(R.id.widget_btn_translate, translatePendingIntent(context))

@@ -57,7 +57,7 @@
         <receiver
             android:name=".widget.BakkwoWidgetProvider"
             android:exported="false"
-            android:label="@string/app_name">
+            android:label="@string/widget_provider_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>

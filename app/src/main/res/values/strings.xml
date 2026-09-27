@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">바꿔</string>
+    <!-- Only the widget picker's label, so searching "bakkwo" in English finds it there too. -->
+    <string name="widget_provider_label">바꿔 (Bakkwo)</string>
     <string name="app_tagline">번역하거나 물어볼 걸 입력해보세요\n(예: \"이거 얼마예요 영어로\")</string>
     <string name="widget_description">클립보드 텍스트를 한 번의 탭으로 번역합니다</string>
 
