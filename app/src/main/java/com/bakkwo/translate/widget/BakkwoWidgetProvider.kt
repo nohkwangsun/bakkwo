@@ -6,6 +6,8 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
+import android.view.View
 import android.widget.RemoteViews
 import com.bakkwo.translate.R
 import com.bakkwo.translate.data.Prefs
@@ -16,21 +18,36 @@ class BakkwoWidgetProvider : AppWidgetProvider() {
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         for (id in appWidgetIds) {
-            appWidgetManager.updateAppWidget(id, buildRemoteViews(context))
+            appWidgetManager.updateAppWidget(id, buildRemoteViews(context, appWidgetManager, id))
         }
     }
 
+    // Fires whenever the user resizes the widget. Without this, a widget dragged down to a
+    // narrow width after being placed would keep the layout picked at placement time.
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: Bundle
+    ) {
+        appWidgetManager.updateAppWidget(appWidgetId, buildRemoteViews(context, appWidgetManager, appWidgetId))
+    }
+
     companion object {
+        // Below this width the "번역" button's text label doesn't reliably fit next to its icon
+        // and the copy/reset buttons, so it's hidden and the button falls back to icon-only.
+        private const val COMPACT_WIDTH_THRESHOLD_DP = 160
+
         /** Called by the worker/receiver once a new translation (or error) is ready. */
         fun updateAllWidgets(context: Context) {
             val manager = AppWidgetManager.getInstance(context)
             val ids = manager.getAppWidgetIds(ComponentName(context, BakkwoWidgetProvider::class.java))
             for (id in ids) {
-                manager.updateAppWidget(id, buildRemoteViews(context))
+                manager.updateAppWidget(id, buildRemoteViews(context, manager, id))
             }
         }
 
-        private fun buildRemoteViews(context: Context): RemoteViews {
+        private fun buildRemoteViews(context: Context, manager: AppWidgetManager, appWidgetId: Int): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_bakkwo)
 
             val resultText = when (Prefs.getLastState(context)) {
@@ -40,6 +57,14 @@ class BakkwoWidgetProvider : AppWidgetProvider() {
                 else -> context.getString(R.string.widget_placeholder_source)
             }
             views.setTextViewText(R.id.widget_result, resultText)
+
+            val minWidthDp = manager.getAppWidgetOptions(appWidgetId)
+                .getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, Int.MAX_VALUE)
+            val isCompact = minWidthDp < COMPACT_WIDTH_THRESHOLD_DP
+            views.setViewVisibility(
+                R.id.widget_translate_label,
+                if (isCompact) View.GONE else View.VISIBLE
+            )
 
             views.setOnClickPendingIntent(R.id.widget_btn_translate, translatePendingIntent(context))
             views.setOnClickPendingIntent(R.id.widget_btn_copy, copyPendingIntent(context))
