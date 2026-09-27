@@ -29,13 +29,17 @@ object GeminiClient {
     private const val MAX_ATTEMPTS = 3
     private val RETRY_DELAYS_MS = longArrayOf(1500, 3000)
 
+    // Only the most recent turns are sent as context, to keep latency/cost bounded.
+    private const val MAX_HISTORY_MESSAGES = 20
+
     // Baked into the app so the user never has to type a translation prompt themselves (e.g. no
     // need to type "... 영어로"). Can be overridden per-device via the hidden prompt editor
     // (long-press the title in MainActivity), stored through Prefs.getCustomPrompt/setCustomPrompt.
-    const val DEFAULT_SYSTEM_PROMPT = """You are a translation assistant embedded in a one-tap widget/app,
+    const val DEFAULT_SYSTEM_PROMPT = """You are a translation assistant embedded in a chat-style app,
 answering the way Gemini's own chat does when asked to translate something — helpful and a little
-rich, not a bare machine-translation line.
-Detect the language of the user's message.
+rich, not a bare machine-translation line. The conversation can continue across turns: use earlier
+messages as context for follow-ups (e.g. "그럼 이건?", "더 격식있게 다시").
+Detect the language of the user's latest message.
 - If it is Korean, translate/answer in English.
 - If it is any other language, translate/answer in Korean.
 
@@ -52,21 +56,37 @@ best natural translation, plus one short line of nuance only if genuinely useful
 Plain text only — no markdown symbols like ** or #, no numbered list markers. Keep the whole reply
 compact: at most about 8 short lines total."""
 
+    data class ChatMessage(val role: String, val text: String) {
+        companion object {
+            const val ROLE_USER = "user"
+            const val ROLE_MODEL = "model"
+        }
+    }
+
     sealed class Result {
         data class Success(val translation: String) : Result()
         data class Failure(val message: String) : Result()
     }
 
+    /** Single-shot convenience used by the widget and the share popup (no conversation history). */
     suspend fun translate(
         apiKey: String,
         text: String,
         systemPrompt: String = DEFAULT_SYSTEM_PROMPT
+    ): Result = chat(apiKey, listOf(ChatMessage(ChatMessage.ROLE_USER, text)), systemPrompt)
+
+    /** [messages] is the full conversation so far, ending with the latest user message. */
+    suspend fun chat(
+        apiKey: String,
+        messages: List<ChatMessage>,
+        systemPrompt: String = DEFAULT_SYSTEM_PROMPT
     ): Result {
+        val turns = messages.takeLast(MAX_HISTORY_MESSAGES)
         var lastFailure: Result.Failure? = null
         for (attempt in 0 until MAX_ATTEMPTS) {
             if (attempt > 0) delay(RETRY_DELAYS_MS[attempt - 1])
 
-            when (val result = translateOnce(apiKey, text, systemPrompt)) {
+            when (val result = chatOnce(apiKey, turns, systemPrompt)) {
                 is Result.Success -> return result
                 is Result.Failure -> {
                     lastFailure = result
@@ -86,22 +106,27 @@ compact: at most about 8 short lines total."""
             lower.contains("http 503")
     }
 
-    private suspend fun translateOnce(
+    private suspend fun chatOnce(
         apiKey: String,
-        text: String,
+        messages: List<ChatMessage>,
         systemPrompt: String
     ): Result = withContext(Dispatchers.IO) {
         var connection: HttpURLConnection? = null
         try {
+            val contents = JSONArray()
+            messages.forEach { message ->
+                contents.put(
+                    JSONObject()
+                        .put("role", message.role)
+                        .put("parts", JSONArray().put(JSONObject().put("text", message.text)))
+                )
+            }
+
             val body = JSONObject().apply {
                 put("system_instruction", JSONObject().put(
                     "parts", JSONArray().put(JSONObject().put("text", systemPrompt))
                 ))
-                put("contents", JSONArray().put(
-                    JSONObject()
-                        .put("role", "user")
-                        .put("parts", JSONArray().put(JSONObject().put("text", text)))
-                ))
+                put("contents", contents)
                 put("generationConfig", JSONObject().apply {
                     put("temperature", 0)
                     put("maxOutputTokens", 500)

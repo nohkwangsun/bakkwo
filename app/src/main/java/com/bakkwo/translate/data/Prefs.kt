@@ -2,6 +2,8 @@ package com.bakkwo.translate.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import org.json.JSONArray
+import org.json.JSONObject
 
 /**
  * Local, app-private storage for the Gemini API key and the last translation shown in the
@@ -15,6 +17,7 @@ object Prefs {
     private const val KEY_LAST_RESULT = "last_result"
     private const val KEY_LAST_STATE = "last_state"
     private const val KEY_CUSTOM_PROMPT = "custom_system_prompt"
+    private const val KEY_CHAT_HISTORY = "chat_history"
 
     const val STATE_IDLE = "idle"
     const val STATE_LOADING = "loading"
@@ -76,5 +79,29 @@ object Prefs {
             .putString(KEY_LAST_RESULT, message)
             .putString(KEY_LAST_STATE, STATE_ERROR)
             .apply()
+    }
+
+    /** Persisted so the in-app chat survives closing and reopening the app. */
+    fun getChatHistory(context: Context): List<GeminiClient.ChatMessage> {
+        val raw = prefs(context).getString(KEY_CHAT_HISTORY, null) ?: return emptyList()
+        return runCatching {
+            val array = JSONArray(raw)
+            (0 until array.length()).map { i ->
+                val obj = array.getJSONObject(i)
+                GeminiClient.ChatMessage(obj.getString("role"), obj.getString("text"))
+            }
+        }.getOrDefault(emptyList())
+    }
+
+    fun saveChatHistory(context: Context, messages: List<GeminiClient.ChatMessage>) {
+        val array = JSONArray()
+        messages.forEach { message ->
+            array.put(JSONObject().put("role", message.role).put("text", message.text))
+        }
+        prefs(context).edit().putString(KEY_CHAT_HISTORY, array.toString()).apply()
+    }
+
+    fun clearChatHistory(context: Context) {
+        prefs(context).edit().remove(KEY_CHAT_HISTORY).apply()
     }
 }
