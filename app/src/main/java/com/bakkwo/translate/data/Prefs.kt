@@ -14,6 +14,7 @@ object Prefs {
     private const val KEY_LAST_SOURCE = "last_source"
     private const val KEY_LAST_RESULT = "last_result"
     private const val KEY_LAST_STATE = "last_state"
+    private const val KEY_CUSTOM_PROMPT = "custom_system_prompt"
 
     const val STATE_IDLE = "idle"
     const val STATE_LOADING = "loading"
@@ -30,6 +31,23 @@ object Prefs {
     }
 
     fun hasApiKey(context: Context): Boolean = !getApiKey(context).isNullOrBlank()
+
+    /** Null means "use the built-in default" ([GeminiClient.DEFAULT_SYSTEM_PROMPT]). */
+    fun getCustomPrompt(context: Context): String? = prefs(context).getString(KEY_CUSTOM_PROMPT, null)
+
+    fun setCustomPrompt(context: Context, prompt: String?) {
+        val editor = prefs(context).edit()
+        if (prompt.isNullOrBlank()) {
+            editor.remove(KEY_CUSTOM_PROMPT)
+        } else {
+            editor.putString(KEY_CUSTOM_PROMPT, prompt)
+        }
+        editor.apply()
+    }
+
+    /** The prompt actually sent to Gemini: the user's override, or the built-in default. */
+    fun getActivePrompt(context: Context): String =
+        getCustomPrompt(context)?.takeIf { it.isNotBlank() } ?: GeminiClient.DEFAULT_SYSTEM_PROMPT
 
     fun getLastSource(context: Context): String? = prefs(context).getString(KEY_LAST_SOURCE, null)
 

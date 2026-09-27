@@ -71,7 +71,10 @@ Actions 워크플로우(`.github/workflows/android-build.yml`)가 push할 때마
 
 ## 커스터마이즈
 
-- 번역 방향(현재: 한국어↔영어 자동 감지)은 `data/GeminiClient.kt`의 `SYSTEM_PROMPT`에서 수정
+- **숨은 설정**: 앱 메인 화면에서 상단의 "바꿔" 제목을 **길게 누르면** 번역 프롬프트를 직접
+  수정하는 대화상자가 뜹니다. 여기서 바꾼 프롬프트는 기기에 저장되어 이후 모든 번역(위젯 포함)에
+  적용되며, "기본값으로 초기화" 버튼으로 원래 프롬프트로 되돌릴 수 있습니다.
+- 기본 번역 방향(한국어↔영어 자동 감지)은 `data/GeminiClient.kt`의 `DEFAULT_SYSTEM_PROMPT`에서 수정
 - 모델은 같은 파일의 `MODEL` 상수(`gemini-3.8-flash`)에서 변경
 
 ## Gemini 무료 티어 참고

@@ -29,8 +29,10 @@ object GeminiClient {
     private const val MAX_ATTEMPTS = 3
     private val RETRY_DELAYS_MS = longArrayOf(1500, 3000)
 
-    // Baked into the app so the user never has to type a translation prompt themselves.
-    private const val SYSTEM_PROMPT = """You are a translation engine embedded in a one-tap widget.
+    // Baked into the app so the user never has to type a translation prompt themselves. Can be
+    // overridden per-device via the hidden prompt editor (long-press the title in MainActivity),
+    // stored through Prefs.getCustomPrompt/setCustomPrompt.
+    const val DEFAULT_SYSTEM_PROMPT = """You are a translation engine embedded in a one-tap widget.
 Detect the language of the user's message.
 - If it is Korean, translate it into natural, fluent English.
 - If it is any other language, translate it into natural, fluent Korean.
@@ -41,12 +43,16 @@ Output ONLY the translated text. No quotes, labels, explanations, or extra comme
         data class Failure(val message: String) : Result()
     }
 
-    suspend fun translate(apiKey: String, text: String): Result {
+    suspend fun translate(
+        apiKey: String,
+        text: String,
+        systemPrompt: String = DEFAULT_SYSTEM_PROMPT
+    ): Result {
         var lastFailure: Result.Failure? = null
         for (attempt in 0 until MAX_ATTEMPTS) {
             if (attempt > 0) delay(RETRY_DELAYS_MS[attempt - 1])
 
-            when (val result = translateOnce(apiKey, text)) {
+            when (val result = translateOnce(apiKey, text, systemPrompt)) {
                 is Result.Success -> return result
                 is Result.Failure -> {
                     lastFailure = result
@@ -66,12 +72,16 @@ Output ONLY the translated text. No quotes, labels, explanations, or extra comme
             lower.contains("http 503")
     }
 
-    private suspend fun translateOnce(apiKey: String, text: String): Result = withContext(Dispatchers.IO) {
+    private suspend fun translateOnce(
+        apiKey: String,
+        text: String,
+        systemPrompt: String
+    ): Result = withContext(Dispatchers.IO) {
         var connection: HttpURLConnection? = null
         try {
             val body = JSONObject().apply {
                 put("system_instruction", JSONObject().put(
-                    "parts", JSONArray().put(JSONObject().put("text", SYSTEM_PROMPT))
+                    "parts", JSONArray().put(JSONObject().put("text", systemPrompt))
                 ))
                 put("contents", JSONArray().put(
                     JSONObject()

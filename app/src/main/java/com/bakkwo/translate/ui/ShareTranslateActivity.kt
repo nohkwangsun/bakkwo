@@ -61,8 +61,9 @@ class ShareTranslateActivity : AppCompatActivity() {
         }
 
         binding.textShareResult.setText(R.string.translating)
+        val prompt = Prefs.getActivePrompt(this)
         lifecycleScope.launch {
-            when (val result = GeminiClient.translate(apiKey, text)) {
+            when (val result = GeminiClient.translate(apiKey, text, prompt)) {
                 is GeminiClient.Result.Success -> {
                     binding.textShareResult.text = result.translation
                     Prefs.setResult(this@ShareTranslateActivity, text, result.translation)

@@ -25,7 +25,8 @@ class TranslateWorker(appContext: Context, params: WorkerParameters) :
             return Result.failure()
         }
 
-        return when (val result = GeminiClient.translate(apiKey, text)) {
+        val prompt = Prefs.getActivePrompt(applicationContext)
+        return when (val result = GeminiClient.translate(apiKey, text, prompt)) {
             is GeminiClient.Result.Success -> {
                 Prefs.setResult(applicationContext, text, result.translation)
                 BakkwoWidgetProvider.updateAllWidgets(applicationContext)

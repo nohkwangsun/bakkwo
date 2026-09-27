@@ -8,8 +8,13 @@ import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.text.Editable
+import android.text.InputType
 import android.text.TextWatcher
+import android.view.Gravity
+import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.bakkwo.translate.R
@@ -60,6 +65,41 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.btnPinWidget.setOnClickListener { requestPinWidget() }
+
+        // Hidden setting: long-press the app title to edit the raw translation prompt.
+        binding.textAppTitle.setOnLongClickListener {
+            showPromptEditorDialog()
+            true
+        }
+    }
+
+    private fun showPromptEditorDialog() {
+        val editText = EditText(this).apply {
+            setText(Prefs.getActivePrompt(this@MainActivity))
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+            gravity = Gravity.TOP or Gravity.START
+            minLines = 8
+        }
+        val padding = (16 * resources.displayMetrics.density).toInt()
+        val container = FrameLayout(this).apply {
+            setPadding(padding, padding / 2, padding, 0)
+            addView(editText)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.prompt_editor_title)
+            .setMessage(R.string.prompt_editor_message)
+            .setView(container)
+            .setPositiveButton(R.string.btn_save_key) { _, _ ->
+                Prefs.setCustomPrompt(this, editText.text?.toString())
+                Toast.makeText(this, R.string.msg_prompt_saved, Toast.LENGTH_SHORT).show()
+            }
+            .setNeutralButton(R.string.btn_reset_prompt) { _, _ ->
+                Prefs.setCustomPrompt(this, null)
+                Toast.makeText(this, R.string.msg_prompt_reset, Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun scheduleTranslate(text: String) {
@@ -78,7 +118,8 @@ class MainActivity : AppCompatActivity() {
             }
 
             binding.textResult.setText(R.string.translating)
-            when (val result = GeminiClient.translate(apiKey, text)) {
+            val prompt = Prefs.getActivePrompt(this@MainActivity)
+            when (val result = GeminiClient.translate(apiKey, text, prompt)) {
                 is GeminiClient.Result.Success -> {
                     binding.textResult.text = result.translation
                     Prefs.setResult(this@MainActivity, text, result.translation)
