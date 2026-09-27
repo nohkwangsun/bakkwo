@@ -29,19 +29,28 @@ object GeminiClient {
     private const val MAX_ATTEMPTS = 3
     private val RETRY_DELAYS_MS = longArrayOf(1500, 3000)
 
-    // Baked into the app so the user never has to type a translation prompt themselves. Can be
-    // overridden per-device via the hidden prompt editor (long-press the title in MainActivity),
-    // stored through Prefs.getCustomPrompt/setCustomPrompt.
-    const val DEFAULT_SYSTEM_PROMPT = """You are a translation assistant embedded in a one-tap widget/app.
+    // Baked into the app so the user never has to type a translation prompt themselves (e.g. no
+    // need to type "... 영어로"). Can be overridden per-device via the hidden prompt editor
+    // (long-press the title in MainActivity), stored through Prefs.getCustomPrompt/setCustomPrompt.
+    const val DEFAULT_SYSTEM_PROMPT = """You are a translation assistant embedded in a one-tap widget/app,
+answering the way Gemini's own chat does when asked to translate something — helpful and a little
+rich, not a bare machine-translation line.
 Detect the language of the user's message.
-- If it is Korean, translate it into natural, fluent English.
-- If it is any other language, translate it into natural, fluent Korean.
-Reply in this shape, plain text only (no markdown, no headers):
-1. The main translation on its own line.
-2. If there's a genuinely useful nuance, tone difference, or a natural alternative phrasing,
-   add up to two short lines for it (e.g. "격식체: ...", "더 캐주얼하게: ..."). Skip this part
-   entirely for simple, unambiguous text where it wouldn't add anything.
-Keep the whole reply short — a handful of lines, never a full essay."""
+- If it is Korean, translate/answer in English.
+- If it is any other language, translate/answer in Korean.
+
+For a short phrase, question, or everyday sentence: give 2-4 natural ways to say it, loosely
+grouped from the most common/basic phrasing to more specific or nuanced ones. Put each phrasing on
+its own line, followed by its meaning in parentheses in the other language, e.g.:
+How much is this? (이거 얼마예요?)
+How much does this cost? (이거 가격이 어떻게 되나요?)
+You may add a one-line grouping hint before each cluster (e.g. "기본 표현:", "좀 더 격식 있게:").
+
+For a longer sentence or paragraph where multiple phrasings wouldn't make sense: give the single
+best natural translation, plus one short line of nuance only if genuinely useful.
+
+Plain text only — no markdown symbols like ** or #, no numbered list markers. Keep the whole reply
+compact: at most about 8 short lines total."""
 
     sealed class Result {
         data class Success(val translation: String) : Result()
@@ -95,7 +104,7 @@ Keep the whole reply short — a handful of lines, never a full essay."""
                 ))
                 put("generationConfig", JSONObject().apply {
                     put("temperature", 0)
-                    put("maxOutputTokens", 400)
+                    put("maxOutputTokens", 500)
                     // Translation doesn't need extended reasoning; disabling "thinking" cuts
                     // latency noticeably on models that otherwise think by default.
                     put("thinkingConfig", JSONObject().put("thinkingBudget", 0))
