@@ -46,6 +46,11 @@ Actions 워크플로우(`.github/workflows/android-build.yml`)가 push할 때마
 - **Actions 탭 → 해당 실행 → Artifacts** — GitHub Actions 아티팩트 특성상 항상 `.zip`으로
   감싸져 있어 압축을 풀어야 합니다.
 
+> **기존에 이미 설치해보신 분들만**: 초기 몇 번의 빌드는 CI 러너가 매번 임시 디버그 키로 서명해서,
+> 이후 `keystore/debug.keystore`를 고정하기 전까지는 새 APK를 덮어설치할 수 없었습니다
+> (서명이 다르면 안드로이드가 업데이트 설치를 거부합니다). **한 번만** 기존 앱을 삭제하고 최신
+> APK를 새로 설치해주세요. 그 다음부터는 항상 같은 키로 서명되어 삭제 없이 바로 업데이트됩니다.
+
 직접 빌드하려면:
 
 1. Android Studio → `Open` → 이 저장소 폴더 선택

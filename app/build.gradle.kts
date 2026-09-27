@@ -15,6 +15,20 @@ android {
         versionName = "1.0"
     }
 
+    // Fixed debug keystore checked into the repo (not secret — same purpose as the stock AOSP
+    // debug.keystore) so every build, whether from CI or a local machine, signs with the same
+    // certificate. Without this, each fresh CI runner auto-generates its own debug keystore, so
+    // every new build gets installed with a different signature and Android refuses to install
+    // an update over the previous one without uninstalling first.
+    signingConfigs {
+        getByName("debug") {
+            storeFile = rootProject.file("keystore/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
