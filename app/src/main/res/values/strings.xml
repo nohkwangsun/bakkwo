@@ -24,7 +24,7 @@
     <string name="session_empty_preview">(빈 대화)</string>
 
     <string name="widget_help_title">홈 화면 위젯</string>
-    <string name="widget_steps">① 아무 앱에서 문장 복사\n② 위젯의 번역 버튼 탭\n③ 결과 확인 — 결과를 탭하면 전체 보기\n\n위젯은 번역할 때마다 대화가 이어져요. 오른쪽 위 새로고침 아이콘을 누르면 새 대화로 초기화돼요.</string>
+    <string name="widget_steps">① 아무 앱에서 문장 복사\n② 위젯의 번역 버튼 탭\n③ 결과 확인 — 결과를 탭하면 전체 보기\n\n위젯은 번역할 때마다 대화가 이어져요. 새로고침 아이콘(복사 버튼 옆)을 누르면 새 대화로 초기화돼요.</string>
     <string name="btn_pin_widget">위젯 추가</string>
     <string name="msg_pin_unsupported">자동 추가가 지원되지 않는 기기예요. 홈 화면을 길게 눌러 \'바꿔\' 위젯을 직접 추가해주세요</string>
 
