@@ -32,11 +32,16 @@ object GeminiClient {
     // Baked into the app so the user never has to type a translation prompt themselves. Can be
     // overridden per-device via the hidden prompt editor (long-press the title in MainActivity),
     // stored through Prefs.getCustomPrompt/setCustomPrompt.
-    const val DEFAULT_SYSTEM_PROMPT = """You are a translation engine embedded in a one-tap widget.
+    const val DEFAULT_SYSTEM_PROMPT = """You are a translation assistant embedded in a one-tap widget/app.
 Detect the language of the user's message.
 - If it is Korean, translate it into natural, fluent English.
 - If it is any other language, translate it into natural, fluent Korean.
-Output ONLY the translated text. No quotes, labels, explanations, or extra commentary."""
+Reply in this shape, plain text only (no markdown, no headers):
+1. The main translation on its own line.
+2. If there's a genuinely useful nuance, tone difference, or a natural alternative phrasing,
+   add up to two short lines for it (e.g. "격식체: ...", "더 캐주얼하게: ..."). Skip this part
+   entirely for simple, unambiguous text where it wouldn't add anything.
+Keep the whole reply short — a handful of lines, never a full essay."""
 
     sealed class Result {
         data class Success(val translation: String) : Result()
@@ -88,7 +93,13 @@ Output ONLY the translated text. No quotes, labels, explanations, or extra comme
                         .put("role", "user")
                         .put("parts", JSONArray().put(JSONObject().put("text", text)))
                 ))
-                put("generationConfig", JSONObject().put("temperature", 0))
+                put("generationConfig", JSONObject().apply {
+                    put("temperature", 0)
+                    put("maxOutputTokens", 400)
+                    // Translation doesn't need extended reasoning; disabling "thinking" cuts
+                    // latency noticeably on models that otherwise think by default.
+                    put("thinkingConfig", JSONObject().put("thinkingBudget", 0))
+                })
             }
 
             val encodedKey = URLEncoder.encode(apiKey, "UTF-8")

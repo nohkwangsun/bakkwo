@@ -41,6 +41,13 @@ class MainActivity : AppCompatActivity() {
 
         Prefs.getApiKey(this)?.let { binding.editApiKey.setText(it) }
 
+        // Restore the widget's last translation so tapping it (which opens this screen) actually
+        // shows the full text, not just the 3-line widget preview. Only the result is restored
+        // (not the source EditText) so this doesn't re-trigger a translation on open.
+        if (Prefs.getLastState(this) == Prefs.STATE_DONE) {
+            binding.textResult.text = Prefs.getLastResult(this)
+        }
+
         binding.btnSaveKey.setOnClickListener {
             val key = binding.editApiKey.text?.toString().orEmpty()
             if (key.isBlank()) return@setOnClickListener
