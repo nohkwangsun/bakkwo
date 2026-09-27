@@ -17,6 +17,7 @@ import com.bakkwo.translate.data.AnthropicClient
 import com.bakkwo.translate.data.Prefs
 import com.bakkwo.translate.databinding.ActivityMainBinding
 import com.bakkwo.translate.widget.BakkwoWidgetProvider
+import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -30,6 +31,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        binding.inputLayoutApiKey.endIconMode = TextInputLayout.END_ICON_PASSWORD_TOGGLE
 
         Prefs.getApiKey(this)?.let { binding.editApiKey.setText(it) }
 
