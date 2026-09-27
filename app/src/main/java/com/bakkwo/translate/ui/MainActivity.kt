@@ -38,8 +38,17 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        history.addAll(Prefs.getChatHistory(this))
-        history.forEach { addBubble(it.role, it.text) }
+        // Every app open is a fresh session — chat history isn't persisted across restarts.
+        // But if the widget (or share popup) has a translation waiting, pick up from there
+        // instead of showing a blank screen with no way to see what it means.
+        if (Prefs.getLastState(this) == Prefs.STATE_DONE) {
+            val source = Prefs.getLastSource(this)
+            val result = Prefs.getLastResult(this)
+            if (!source.isNullOrBlank() && !result.isNullOrBlank()) {
+                addMessage(GeminiClient.ChatMessage.ROLE_USER, source)
+                addMessage(GeminiClient.ChatMessage.ROLE_MODEL, result)
+            }
+        }
         updateEmptyHintVisibility()
 
         binding.btnSend.setOnClickListener { onSendClicked() }
@@ -100,10 +109,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** Adds a message to both the persisted history and the on-screen chat. */
+    /** Adds a message to this session's (in-memory only) history and the on-screen chat. */
     private fun addMessage(role: String, text: String, alreadyShown: Boolean = false) {
         history.add(GeminiClient.ChatMessage(role, text))
-        Prefs.saveChatHistory(this, history)
         if (!alreadyShown) addBubble(role, text)
         updateEmptyHintVisibility()
     }
@@ -234,7 +242,6 @@ class MainActivity : AppCompatActivity() {
             .setMessage(R.string.confirm_clear_chat)
             .setPositiveButton(R.string.btn_clear) { _, _ ->
                 history.clear()
-                Prefs.clearChatHistory(this)
                 binding.messagesContainer.removeAllViews()
                 updateEmptyHintVisibility()
                 Toast.makeText(this, R.string.msg_chat_cleared, Toast.LENGTH_SHORT).show()
