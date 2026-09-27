@@ -67,7 +67,7 @@ Actions 워크플로우(`.github/workflows/android-build.yml`)가 push할 때마
 ## 커스터마이즈
 
 - 번역 방향(현재: 한국어↔영어 자동 감지)은 `data/GeminiClient.kt`의 `SYSTEM_PROMPT`에서 수정
-- 모델은 같은 파일의 `MODEL` 상수(`gemini-2.5-flash`)에서 변경
+- 모델은 같은 파일의 `MODEL` 상수(`gemini-3.8-flash`)에서 변경
 
 ## Gemini 무료 티어 참고
 

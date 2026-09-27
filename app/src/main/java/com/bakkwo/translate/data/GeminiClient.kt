@@ -19,7 +19,7 @@ import java.nio.charset.StandardCharsets
  */
 object GeminiClient {
 
-    private const val MODEL = "gemini-2.5-flash"
+    private const val MODEL = "gemini-3.8-flash"
     private const val ENDPOINT_TEMPLATE =
         "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s"
 
