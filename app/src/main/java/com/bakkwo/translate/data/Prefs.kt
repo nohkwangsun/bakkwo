@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.UUID
 
 /**
  * Local, app-private storage for the Gemini API key, the widget's last translation, and past
@@ -20,6 +21,7 @@ object Prefs {
     private const val KEY_CUSTOM_PROMPT = "custom_system_prompt"
     private const val KEY_SESSIONS = "sessions"
     private const val MAX_SESSIONS = 30
+    private const val KEY_WIDGET_SESSION_ID = "widget_session_id"
 
     const val STATE_IDLE = "idle"
     const val STATE_LOADING = "loading"
@@ -171,4 +173,32 @@ object Prefs {
         val raw = prefs(context).getString(KEY_SESSIONS, null) ?: return JSONArray()
         return runCatching { JSONArray(raw) }.getOrDefault(JSONArray())
     }
+
+    // --- The widget's own ongoing conversation ---
+    // Unlike MainActivity's session (a fresh id every app open), the widget keeps using the same
+    // session id across taps until explicitly reset, so repeated widget translations build on
+    // each other instead of each being an isolated one-off call.
+
+    fun getOrCreateWidgetSessionId(context: Context): String {
+        val p = prefs(context)
+        p.getString(KEY_WIDGET_SESSION_ID, null)?.let { return it }
+        val id = UUID.randomUUID().toString()
+        p.edit().putString(KEY_WIDGET_SESSION_ID, id).apply()
+        return id
+    }
+
+    /** Starts a new widget conversation and resets the widget's displayed preview to empty. */
+    fun resetWidgetSession(context: Context) {
+        getWidgetSessionIdOrNull(context)?.let { deleteSession(context, it) }
+        prefs(context).edit()
+            .remove(KEY_WIDGET_SESSION_ID)
+            .remove(KEY_LAST_SOURCE)
+            .remove(KEY_LAST_RESULT)
+            .putString(KEY_LAST_STATE, STATE_IDLE)
+            .putBoolean(KEY_HANDOFF_PENDING, false)
+            .apply()
+    }
+
+    private fun getWidgetSessionIdOrNull(context: Context): String? =
+        prefs(context).getString(KEY_WIDGET_SESSION_ID, null)
 }

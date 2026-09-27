@@ -10,12 +10,16 @@
 2. 홈 화면의 **바꿔 위젯**에서 **번역** 버튼을 한 번 탭합니다.
 3. 위젯 안에 번역 결과가 바로 표시됩니다. **복사** 버튼을 누르면 결과가 클립보드에 담깁니다.
 
+위젯은 탭할 때마다 대화가 이어집니다 — 방금 번역한 내용을 맥락으로 다음 번역에도 참고해요.
+새 대화로 초기화하고 싶으면 위젯 오른쪽 위의 새로고침 아이콘을 누르면 됩니다.
+
 다른 앱(카톡, 브라우저 등)에서 텍스트를 선택 → **공유** → **바꿔**를 선택해도 같은 방식으로
-(작은 팝업으로) 즉시 번역됩니다. 앱을 직접 열지 않아도 되는 두 가지 경로를 모두 제공합니다.
+(작은 팝업으로) 즉시 번역됩니다. 이건 위젯과 별개로 매번 한 번만 번역하는 방식입니다.
 
 앱을 직접 열면 일반 AI 챗처럼 대화가 이어지는 채팅 화면이 나옵니다 — 첫 화면엔 입력창과 대화
 내용만 보이고, API 키 설정·위젯 사용법·프롬프트 수정 같은 부가 기능은 오른쪽 위 메뉴(⋮) 뒤에
-숨겨 두었습니다. 대화 기록은 기기에 저장되어 앱을 껐다 켜도 이어집니다.
+숨겨 두었습니다. 앱을 열 때마다 새 대화로 시작하되, 위젯에 최근 번역이 있으면 그 내용부터
+이어서 보여줍니다. 메뉴의 **지난 대화**에서 이전 대화 목록을 보고 다시 이어갈 수 있습니다.
 
 ## 왜 위젯 안에 입력창이 없나요?
 
@@ -27,17 +31,22 @@
 ## 프로젝트 구조
 
 - `app/src/main/java/com/bakkwo/translate/`
-  - `ui/MainActivity.kt` — API 키 설정 + 앱 안에서 직접 번역해보는 화면(입력 중 자동 번역) + 위젯 추가 버튼
+  - `ui/MainActivity.kt` — 채팅형 메인 화면(대화 목록 + 입력창). API 키 설정, 위젯 사용법,
+    프롬프트 수정, 지난 대화 목록은 오른쪽 위 메뉴(⋮)에 모아 두었습니다.
+  - `ui/SessionListActivity.kt` — 메뉴의 "지난 대화"에서 여는, 저장된 과거 대화 목록 화면
   - `ui/ShareTranslateActivity.kt` — 다른 앱에서 "공유"로 들어온 텍스트를 즉시 번역해 보여주는 작은 팝업
   - `ui/ClipboardTranslateActivity.kt` — 위젯의 "번역" 버튼이 여는 투명 액티비티. 클립보드는
     포커스를 가진 액티비티에서만 읽을 수 있어서, 클립보드를 읽자마자 `WorkManager`에 실제 번역
     작업을 넘기고 화면을 그리지 않은 채 바로 닫힙니다.
   - `widget/BakkwoWidgetProvider.kt` — 위젯 레이아웃 갱신, 버튼 PendingIntent 연결
-  - `widget/WidgetActionReceiver.kt` — 위젯의 "복사" 버튼 처리
+  - `widget/WidgetActionReceiver.kt` — 위젯의 "복사" 버튼과 "초기화"(새로고침 아이콘) 버튼 처리
   - `worker/TranslateWorker.kt` — 실제 Gemini API 호출을 수행하는 백그라운드 작업(액티비티
-    생명주기와 무관하게 끝까지 실행됨)
-  - `data/GeminiClient.kt` — Gemini `generateContent` API 직접 호출(HttpURLConnection, 의존성 최소화)
-  - `data/Prefs.kt` — API 키 및 마지막 번역 결과를 앱 전용 저장소(SharedPreferences)에 보관
+    생명주기와 무관하게 끝까지 실행됨). 위젯의 진행 중인 대화(`Prefs.getOrCreateWidgetSessionId`)에
+    이어서 호출합니다.
+  - `data/GeminiClient.kt` — Gemini `generateContent` API 직접 호출(HttpURLConnection, 의존성 최소화).
+    단발성 `translate()`와 여러 턴을 이어가는 `chat()`을 모두 제공합니다.
+  - `data/Prefs.kt` — API 키, 위젯의 마지막 번역, 위젯/앱의 진행 중인 대화 세션, 지난 대화 목록을
+    앱 전용 저장소(SharedPreferences, JSON)에 보관
 
 ## 빌드 방법
 

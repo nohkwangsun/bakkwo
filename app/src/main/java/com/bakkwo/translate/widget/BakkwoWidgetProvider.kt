@@ -43,6 +43,7 @@ class BakkwoWidgetProvider : AppWidgetProvider() {
 
             views.setOnClickPendingIntent(R.id.widget_btn_translate, translatePendingIntent(context))
             views.setOnClickPendingIntent(R.id.widget_btn_copy, copyPendingIntent(context))
+            views.setOnClickPendingIntent(R.id.widget_btn_reset, resetPendingIntent(context))
             views.setOnClickPendingIntent(R.id.widget_result, openAppPendingIntent(context))
 
             return views
@@ -64,6 +65,16 @@ class BakkwoWidgetProvider : AppWidgetProvider() {
             }
             return PendingIntent.getBroadcast(
                 context, 1, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
+
+        private fun resetPendingIntent(context: Context): PendingIntent {
+            val intent = Intent(context, WidgetActionReceiver::class.java).apply {
+                action = WidgetActionReceiver.ACTION_RESET_SESSION
+            }
+            return PendingIntent.getBroadcast(
+                context, 3, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
         }

@@ -26,8 +26,17 @@ class TranslateWorker(appContext: Context, params: WorkerParameters) :
         }
 
         val prompt = Prefs.getActivePrompt(applicationContext)
-        return when (val result = GeminiClient.translate(apiKey, text, prompt)) {
+
+        // The widget keeps one running conversation across taps (until reset from the widget's
+        // own refresh button), rather than treating every tap as an isolated one-off call.
+        val sessionId = Prefs.getOrCreateWidgetSessionId(applicationContext)
+        val history = Prefs.getSessionMessages(applicationContext, sessionId).toMutableList()
+        history.add(GeminiClient.ChatMessage(GeminiClient.ChatMessage.ROLE_USER, text))
+
+        return when (val result = GeminiClient.chat(apiKey, history, prompt)) {
             is GeminiClient.Result.Success -> {
+                history.add(GeminiClient.ChatMessage(GeminiClient.ChatMessage.ROLE_MODEL, result.translation))
+                Prefs.upsertSession(applicationContext, sessionId, history)
                 Prefs.setResult(applicationContext, text, result.translation)
                 BakkwoWidgetProvider.updateAllWidgets(applicationContext)
                 Result.success()
