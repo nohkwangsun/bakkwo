@@ -23,7 +23,7 @@
             </intent-filter>
         </activity>
 
-        <!-- Handles "Share" from any app (select text -> share -> 바꾸) -->
+        <!-- Handles "Share" from any app (select text -> share -> 바꿔) -->
         <activity
             android:name=".ui.ShareTranslateActivity"
             android:exported="true"

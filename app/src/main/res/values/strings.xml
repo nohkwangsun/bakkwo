@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">바꾸</string>
+    <string name="app_name">바꿔</string>
     <string name="widget_description">클립보드 텍스트를 한 번의 탭으로 번역합니다</string>
 
     <string name="hint_api_key">Gemini API 키 (AIza…)</string>
@@ -16,7 +16,7 @@
     <string name="translate_error">번역 실패. 다시 시도해주세요</string>
 
     <string name="btn_pin_widget">홈 화면에 위젯 추가</string>
-    <string name="msg_pin_unsupported">기기에서 자동 추가가 지원되지 않아요. 홈 화면을 길게 눌러 \'바꾸\' 위젯을 직접 추가해주세요</string>
+    <string name="msg_pin_unsupported">기기에서 자동 추가가 지원되지 않아요. 홈 화면을 길게 눌러 \'바꿔\' 위젯을 직접 추가해주세요</string>
     <string name="msg_pin_requested">홈 화면에 위젯을 추가하려면 안내를 따라주세요</string>
 
     <string name="widget_placeholder_source">클립보드에서 번역할 텍스트를 복사한 뒤,\n번역 버튼을 눌러보세요</string>
@@ -28,5 +28,5 @@
     <string name="section_settings">설정</string>
     <string name="section_try_it">바로 번역해보기</string>
     <string name="section_widget">위젯</string>
-    <string name="widget_help">홈 화면에 \'바꾸\' 위젯을 추가하면, 어떤 앱에서든 문장을 복사한 뒤 위젯의 번역 버튼만 눌러도 번역 결과가 바로 위젯에 표시돼요. 다른 앱을 열거나 프롬프트를 입력할 필요가 없어요.</string>
+    <string name="widget_help">홈 화면에 \'바꿔\' 위젯을 추가하면, 어떤 앱에서든 문장을 복사한 뒤 위젯의 번역 버튼만 눌러도 번역 결과가 바로 위젯에 표시돼요. 다른 앱을 열거나 프롬프트를 입력할 필요가 없어요.</string>
 </resources>

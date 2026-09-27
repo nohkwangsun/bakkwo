@@ -6,6 +6,9 @@ on:
       - "**"
   workflow_dispatch: {}
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -28,9 +31,25 @@ jobs:
       - name: Build debug APK
         run: ./gradlew :app:assembleDebug --stacktrace
 
-      - name: Upload APK
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/bakkwo-translator-debug.apk
+
+      - name: Upload APK as build artifact
         uses: actions/upload-artifact@v4
         with:
           name: bakkwo-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: app/build/outputs/apk/debug/bakkwo-translator-debug.apk
           if-no-files-found: error
+
+      # actions/upload-artifact always wraps its output in a .zip, even for a single file.
+      # Publishing to a rolling release instead gives a direct .apk download link.
+      - name: Publish APK to rolling release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: debug-latest
+          name: "바꿔 debug build"
+          body: |
+            자동 빌드된 최신 디버그 APK입니다. (commit ${{ github.sha }})
+            이 릴리스는 push할 때마다 자동으로 갱신됩니다.
+          prerelease: true
+          files: app/build/outputs/apk/debug/bakkwo-translator-debug.apk

@@ -16,7 +16,7 @@ import com.bakkwo.translate.widget.BakkwoWidgetProvider
 import kotlinx.coroutines.launch
 
 /**
- * Shown when the user selects text in any app, taps Share, and picks 바꾸. Translates
+ * Shown when the user selects text in any app, taps Share, and picks 바꿔. Translates
  * immediately with no extra input needed, then offers a one-tap copy.
  */
 class ShareTranslateActivity : AppCompatActivity() {
