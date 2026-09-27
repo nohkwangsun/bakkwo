@@ -1,6 +1,7 @@
 package com.bakkwo.translate.data
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -23,6 +24,11 @@ object GeminiClient {
     private const val ENDPOINT_TEMPLATE =
         "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s"
 
+    // Retried automatically: the model is momentarily overloaded (HTTP 429/503), not a real
+    // failure, so a one-tap widget shouldn't make the user retry it by hand.
+    private const val MAX_ATTEMPTS = 3
+    private val RETRY_DELAYS_MS = longArrayOf(1500, 3000)
+
     // Baked into the app so the user never has to type a translation prompt themselves.
     private const val SYSTEM_PROMPT = """You are a translation engine embedded in a one-tap widget.
 Detect the language of the user's message.
@@ -35,7 +41,32 @@ Output ONLY the translated text. No quotes, labels, explanations, or extra comme
         data class Failure(val message: String) : Result()
     }
 
-    suspend fun translate(apiKey: String, text: String): Result = withContext(Dispatchers.IO) {
+    suspend fun translate(apiKey: String, text: String): Result {
+        var lastFailure: Result.Failure? = null
+        for (attempt in 0 until MAX_ATTEMPTS) {
+            if (attempt > 0) delay(RETRY_DELAYS_MS[attempt - 1])
+
+            when (val result = translateOnce(apiKey, text)) {
+                is Result.Success -> return result
+                is Result.Failure -> {
+                    lastFailure = result
+                    if (!isRetryable(result.message)) return result
+                }
+            }
+        }
+        return lastFailure ?: Result.Failure("알 수 없는 오류")
+    }
+
+    private fun isRetryable(message: String): Boolean {
+        val lower = message.lowercase()
+        return lower.contains("high demand") ||
+            lower.contains("overloaded") ||
+            lower.contains("unavailable") ||
+            lower.contains("http 429") ||
+            lower.contains("http 503")
+    }
+
+    private suspend fun translateOnce(apiKey: String, text: String): Result = withContext(Dispatchers.IO) {
         var connection: HttpURLConnection? = null
         try {
             val body = JSONObject().apply {
