@@ -14,9 +14,14 @@
 
     <string name="btn_menu">메뉴</string>
     <string name="menu_change_key">Gemini API 키 설정</string>
+    <string name="menu_session_list">지난 대화</string>
     <string name="menu_widget_help">홈 화면 위젯 사용법</string>
     <string name="menu_edit_prompt">번역 프롬프트 수정</string>
     <string name="menu_clear_chat">대화 초기화</string>
+
+    <string name="session_list_title">지난 대화</string>
+    <string name="session_list_empty">아직 저장된 대화가 없어요</string>
+    <string name="session_empty_preview">(빈 대화)</string>
 
     <string name="widget_help_title">홈 화면 위젯</string>
     <string name="widget_steps">① 아무 앱에서 문장 복사\n② 위젯의 번역 버튼 탭\n③ 결과 확인 — 결과를 탭하면 전체 보기</string>

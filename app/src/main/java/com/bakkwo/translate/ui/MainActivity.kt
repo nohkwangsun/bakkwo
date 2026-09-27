@@ -26,11 +26,13 @@ import com.bakkwo.translate.databinding.ActivityMainBinding
 import com.bakkwo.translate.widget.BakkwoWidgetProvider
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val history = mutableListOf<GeminiClient.ChatMessage>()
+    private var sessionId = UUID.randomUUID().toString()
     private var sending = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,16 +40,14 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Every app open is a fresh session — chat history isn't persisted across restarts.
-        // But if the widget (or share popup) has a translation waiting, pick up from there
-        // instead of showing a blank screen with no way to see what it means.
-        if (Prefs.getLastState(this) == Prefs.STATE_DONE) {
-            val source = Prefs.getLastSource(this)
-            val result = Prefs.getLastResult(this)
-            if (!source.isNullOrBlank() && !result.isNullOrBlank()) {
-                addMessage(GeminiClient.ChatMessage.ROLE_USER, source)
-                addMessage(GeminiClient.ChatMessage.ROLE_MODEL, result)
-            }
+        // Every app open is a brand new session (a fresh sessionId, nothing loaded from disk).
+        // If the widget/share popup has a translation waiting that hasn't been shown in the app
+        // yet, seed this new session with it instead of a blank screen — but only once: this
+        // consumes it, so opening the app again later doesn't keep re-showing the same old
+        // exchange forever.
+        Prefs.consumeHandoff(this)?.let { (source, result) ->
+            addMessage(GeminiClient.ChatMessage.ROLE_USER, source)
+            addMessage(GeminiClient.ChatMessage.ROLE_MODEL, result)
         }
         updateEmptyHintVisibility()
 
@@ -70,6 +70,25 @@ class MainActivity : AppCompatActivity() {
         if (!Prefs.hasApiKey(this)) {
             showKeySetupDialog()
         }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != REQUEST_SESSION_PICK || resultCode != RESULT_OK) return
+        val pickedId = data?.getStringExtra(SessionListActivity.EXTRA_SESSION_ID) ?: return
+        loadSession(pickedId)
+    }
+
+    private fun loadSession(id: String) {
+        sessionId = id
+        history.clear()
+        binding.messagesContainer.removeAllViews()
+        Prefs.getSessionMessages(this, id).forEach { message ->
+            history.add(message)
+            addBubble(message.role, message.text)
+        }
+        updateEmptyHintVisibility()
     }
 
     private fun onSendClicked() {
@@ -96,8 +115,6 @@ class MainActivity : AppCompatActivity() {
                 is GeminiClient.Result.Success -> {
                     thinkingBubble.text = result.translation
                     addMessage(GeminiClient.ChatMessage.ROLE_MODEL, result.translation, alreadyShown = true)
-                    Prefs.setResult(this@MainActivity, text, result.translation)
-                    BakkwoWidgetProvider.updateAllWidgets(this@MainActivity)
                 }
                 is GeminiClient.Result.Failure -> {
                     val message = getString(R.string.translate_error) + "\n" + result.message
@@ -109,9 +126,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** Adds a message to this session's (in-memory only) history and the on-screen chat. */
+    /** Adds a message to this session (persisted so it shows up under "지난 대화") and the chat UI. */
     private fun addMessage(role: String, text: String, alreadyShown: Boolean = false) {
         history.add(GeminiClient.ChatMessage(role, text))
+        Prefs.upsertSession(this, sessionId, history)
         if (!alreadyShown) addBubble(role, text)
         updateEmptyHintVisibility()
     }
@@ -154,15 +172,17 @@ class MainActivity : AppCompatActivity() {
     private fun showMenu() {
         PopupMenu(this, binding.btnMenu).apply {
             menu.add(0, 1, 0, R.string.menu_change_key)
-            menu.add(0, 2, 1, R.string.menu_widget_help)
-            menu.add(0, 3, 2, R.string.menu_edit_prompt)
-            menu.add(0, 4, 3, R.string.menu_clear_chat)
+            menu.add(0, 2, 1, R.string.menu_session_list)
+            menu.add(0, 3, 2, R.string.menu_widget_help)
+            menu.add(0, 4, 3, R.string.menu_edit_prompt)
+            menu.add(0, 5, 4, R.string.menu_clear_chat)
             setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     1 -> showKeySetupDialog()
-                    2 -> showWidgetHelpDialog()
-                    3 -> showPromptEditorDialog()
-                    4 -> confirmClearChat()
+                    2 -> startActivityForResult(Intent(this@MainActivity, SessionListActivity::class.java), REQUEST_SESSION_PICK)
+                    3 -> showWidgetHelpDialog()
+                    4 -> showPromptEditorDialog()
+                    5 -> confirmClearChat()
                 }
                 true
             }
@@ -241,8 +261,10 @@ class MainActivity : AppCompatActivity() {
         MaterialAlertDialogBuilder(this)
             .setMessage(R.string.confirm_clear_chat)
             .setPositiveButton(R.string.btn_clear) { _, _ ->
+                Prefs.deleteSession(this, sessionId)
                 history.clear()
                 binding.messagesContainer.removeAllViews()
+                sessionId = UUID.randomUUID().toString()
                 updateEmptyHintVisibility()
                 Toast.makeText(this, R.string.msg_chat_cleared, Toast.LENGTH_SHORT).show()
             }
@@ -259,5 +281,9 @@ class MainActivity : AppCompatActivity() {
         } else {
             Toast.makeText(this, R.string.msg_pin_unsupported, Toast.LENGTH_LONG).show()
         }
+    }
+
+    companion object {
+        private const val REQUEST_SESSION_PICK = 1001
     }
 }

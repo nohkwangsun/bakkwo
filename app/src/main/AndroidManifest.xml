@@ -23,6 +23,12 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.SessionListActivity"
+            android:exported="false"
+            android:label="@string/session_list_title"
+            android:theme="@style/Theme.Bakkwo" />
+
         <!-- Handles "Share" from any app (select text -> share -> 바꿔) -->
         <activity
             android:name=".ui.ShareTranslateActivity"
