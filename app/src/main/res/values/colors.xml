@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bakkwo_primary">#3D5AFE</color>
+    <color name="bakkwo_primary_dark">#0031CA</color>
+    <color name="bakkwo_on_primary">#FFFFFF</color>
+    <color name="bakkwo_background">#FFFFFF</color>
+    <color name="bakkwo_surface">#F2F3F8</color>
+    <color name="bakkwo_on_surface">#1A1C2B</color>
+    <color name="bakkwo_muted">#5B5F73</color>
+    <color name="bakkwo_error">#BA1A1A</color>
+    <color name="widget_background">#F2F3F8</color>
+</resources>

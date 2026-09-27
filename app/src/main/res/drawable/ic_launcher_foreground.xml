@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bidirectional arrows: stands in for "바꾸" (swap / convert / translate). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,40 H66 L66,28 L84,46 L66,64 L66,52 H30 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M78,68 H42 L42,56 L24,74 L42,92 L42,80 H78 Z" />
+</vector>
