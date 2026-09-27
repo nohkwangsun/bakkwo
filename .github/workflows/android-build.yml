@@ -31,25 +31,42 @@ jobs:
       - name: Build debug APK
         run: ./gradlew :app:assembleDebug --stacktrace
 
-      - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/bakkwo-translator-debug.apk
+      - name: Rename APK with a unique, commit-scoped filename
+        id: rename
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          APK_NAME="bakkwo-translator-debug-${SHORT_SHA}.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/${APK_NAME}"
+          echo "apk_name=${APK_NAME}" >> "$GITHUB_OUTPUT"
 
       - name: Upload APK as build artifact
         uses: actions/upload-artifact@v4
         with:
           name: bakkwo-debug-apk
-          path: app/build/outputs/apk/debug/bakkwo-translator-debug.apk
+          path: app/build/outputs/apk/debug/${{ steps.rename.outputs.apk_name }}
           if-no-files-found: error
 
-      # actions/upload-artifact always wraps its output in a .zip, even for a single file.
-      # Publishing to a rolling release instead gives a direct .apk download link.
+      # A GitHub Release asset URL is cached by GitHub's CDN, so reusing the same filename across
+      # builds occasionally serves a stale (differently-signed) APK for a while after a new one is
+      # pushed — installing that over a newer already-installed build then fails with "App not
+      # installed" (signature mismatch), even though nothing in the signing config changed. Delete
+      # the whole rolling release first so every build gets a fresh release + a uniquely named
+      # asset, which can never be served stale.
+      - name: Delete previous rolling release
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release delete debug-latest --yes --cleanup-tag --repo ${{ github.repository }}
+
       - name: Publish APK to rolling release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: debug-latest
           name: "바꿔 debug build"
           body: |
-            자동 빌드된 최신 디버그 APK입니다. (commit ${{ github.sha }})
-            이 릴리스는 push할 때마다 자동으로 갱신됩니다.
+            자동 빌드된 최신 디버그 APK입니다 (commit ${{ github.sha }}).
+            반드시 아래 첨부파일(.apk)을 새로 받아서 설치해주세요 — 이 릴리스는 push할 때마다
+            통째로 새로 만들어지므로, 예전에 열어둔 링크나 캐시된 파일이 아니라 지금 이 페이지의
+            파일을 받아야 합니다.
           prerelease: true
-          files: app/build/outputs/apk/debug/bakkwo-translator-debug.apk
+          files: app/build/outputs/apk/debug/${{ steps.rename.outputs.apk_name }}

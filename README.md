@@ -41,8 +41,11 @@
 Actions 워크플로우(`.github/workflows/android-build.yml`)가 push할 때마다 자동으로 디버그 APK를
 빌드합니다. 결과물은 두 군데서 받을 수 있어요:
 
-- **Releases 탭 → `debug-latest`** — push할 때마다 같은 릴리스가 갱신되며, `.apk` 파일을
-  압축 없이 그대로 받을 수 있는 직접 다운로드 링크입니다.
+- **Releases 탭 → `debug-latest`** — push할 때마다 릴리스 자체를 통째로 새로 만들고, APK
+  파일명에도 커밋 해시를 붙여서(`bakkwo-translator-debug-<sha>.apk`) 매번 새로운 다운로드
+  URL로 받게 됩니다. (같은 파일명을 계속 재사용하면 GitHub CDN이 예전 파일을 한동안 캐싱해
+  서빙하는 경우가 있어서, 방금 올린 최신 빌드인데도 서명이 다른 예전 APK가 받아지고 그걸
+  설치하려다 "App not installed"가 나는 문제가 있었습니다.) 압축 없이 `.apk`를 그대로 받습니다.
 - **Actions 탭 → 해당 실행 → Artifacts** — GitHub Actions 아티팩트 특성상 항상 `.zip`으로
   감싸져 있어 압축을 풀어야 합니다.
 
